@@ -1,0 +1,29 @@
+.site-button {
+  background-color: hsl(39, 100%, 50%);
+  border: none;
+  padding: 10px;
+  border-radius: 4px;
+  -webkit-box-shadow: 2px 3px 5px -1px rgba(0, 0, 0, 0.5);
+  box-shadow: 2px 3px 5px -1px rgba(0, 0, 0, 0.5);
+  margin: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 1rem;
+  min-width: 1rem;
+}
+
+.separator {
+  border-left: 1px solid black;
+  height: 1rem;
+  margin: 0 5px 0 5px;
+}
+
+.site-button:hover {
+  cursor: pointer;
+  background-color: hsl(36, 100%, 50%);
+}
+
+.site-button:active {
+  background-color: hsl(39, 100%, 50%);
+}
