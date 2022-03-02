@@ -1,7 +1,7 @@
 import {AxiosResponse} from 'axios';
 import {useLayoutEffect, useState} from 'react';
 import {HeaderLinks} from '../../http-common';
-import {getProducts, goToPage} from '../../services/productsDataService';
+import {getProducts, goToPageByNumber, goToPageByURL} from '../../services/productsDataService';
 import Product from '../../types/ProductType';
 import {parseLinkHeader} from '../../utils/parseHeaderLink';
 
@@ -12,14 +12,14 @@ export const useProducts = () => {
 
   const processResponse = (response: AxiosResponse) => {
     setCurrentData(response.data);
-    setPaginationsLinks(parseLinkHeader(response.headers.link));
+    setPaginationsLinks({...parseLinkHeader(response.headers.link)});
   };
 
   const fetchFirstData = async () => {
     setIsLoading(true);
 
     try {
-      await goToPage(1).then(processResponse);
+      await goToPageByNumber(1).then(processResponse);
     } catch (error) {
       console.error('Oops! Something went wronw trying to get the firs page of Products\n', error);
     } finally {
@@ -31,7 +31,7 @@ export const useProducts = () => {
     setIsLoading(true);
 
     try {
-      await goToPage(paginationLinks.next).then(processResponse);
+      await goToPageByURL(paginationLinks.next).then(processResponse);
     } catch (error) {
       console.error('Oops! Something went wronw trying to get the next page of Products\n', error);
     } finally {
@@ -43,7 +43,7 @@ export const useProducts = () => {
     setIsLoading(true);
 
     try {
-      await goToPage(paginationLinks.prev).then(processResponse);
+      await goToPageByURL(paginationLinks.prev).then(processResponse);
     } catch (error) {
       console.error(
         'Oops! Something went wronw trying to get the previous page of Products\n',
@@ -58,7 +58,7 @@ export const useProducts = () => {
     setIsLoading(true);
 
     try {
-      await goToPage(paginationLinks.first).then(processResponse);
+      await goToPageByURL(paginationLinks.first).then(processResponse);
     } catch (error) {
       console.error('Oops! Something went wronw trying to get the first page of Products\n', error);
     } finally {
@@ -70,7 +70,7 @@ export const useProducts = () => {
     setIsLoading(true);
 
     try {
-      await goToPage(paginationLinks.last).then(processResponse);
+      await goToPageByURL(paginationLinks.last).then(processResponse);
     } catch (error) {
       console.error('Oops! Something went wronw trying to get the last page of Products\n', error);
     } finally {
