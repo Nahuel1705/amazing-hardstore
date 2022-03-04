@@ -1,18 +1,60 @@
-import {AxiosResponse} from 'axios';
-import {useLayoutEffect, useState} from 'react';
-import {HeaderLinks} from '../../http-common';
-import {getProducts, goToPageByNumber, goToPageByURL} from '../../services/productsDataService';
-import Product from '../../types/ProductType';
+import {useEffect, useState} from 'react';
 import {parseLinkHeader} from '../../utils/parseHeaderLink';
+
+//fetching
+import {HeaderLinks} from '../../http-common';
+import {
+  getProducts,
+  goToPageByNumber,
+  goToPageByURL,
+  RESULTS_PER_PAGE as productsPerPage,
+} from '../../services/productsDataService';
+import {getParamsFromURL} from '../../utils/getParamsFromURL';
+
+//types
+import {AxiosResponse} from 'axios';
+import Product from '../../types/ProductType';
+
+type PaginationInfo = {
+  currentPage: number;
+  pagesAmount: number;
+};
 
 export const useProducts = () => {
   const [isLoading, setIsLoading] = useState<boolean | null>(null);
-  const [paginationLinks, setPaginationsLinks] = useState<HeaderLinks>({first: '', last: ''});
+  const [paginationLinks, setPaginationsLinks] = useState<HeaderLinks>({
+    first: '',
+    last: '',
+    currentPage: 0,
+    pagesAmount: 0,
+  });
+  const [paginationInfo, setPaginationInfo] = useState<PaginationInfo>({currentPage: 0, pagesAmount: 0});
   const [currentData, setCurrentData] = useState<Product[]>([]);
 
-  const processResponse = (response: AxiosResponse) => {
+  const errorLogs = {
+    firstPage: 'Oops! Something went wronw trying to get the first page of Products\n',
+    nextPage: 'Oops! Something went wronw trying to get the next page of Products\n',
+    previousPage: 'Oops! Something went wronw trying to get the previous page of Products\n',
+    lastPage: 'Oops! Something went wronw trying to get the last page of Products\n',
+  };
+
+  const processResponse = (response: AxiosResponse): void => {
+    const {page} = getParamsFromURL(response.request.responseURL, ['page']);
+    const totalEntries = parseInt(response.headers['x-total-count']) || 0;
+
+    setPaginationInfo({currentPage: page, pagesAmount: Math.ceil(totalEntries / productsPerPage)});
     setCurrentData(response.data);
     setPaginationsLinks({...parseLinkHeader(response.headers.link)});
+  };
+
+  const navigateTo = async (url: string, errorLog: string) => {
+    setIsLoading(true);
+    try {
+      await goToPageByURL(url).then(processResponse);
+    } catch (error) {
+      console.error(errorLog, error);
+    }
+    setIsLoading(false);
   };
 
   const fetchFirstData = async () => {
@@ -21,61 +63,10 @@ export const useProducts = () => {
     try {
       await goToPageByNumber(1).then(processResponse);
     } catch (error) {
-      console.error('Oops! Something went wronw trying to get the firs page of Products\n', error);
-    } finally {
-      setIsLoading(false);
+      console.error(errorLogs.firstPage, error);
     }
-  };
 
-  const nexPage = async () => {
-    setIsLoading(true);
-
-    try {
-      await goToPageByURL(paginationLinks.next).then(processResponse);
-    } catch (error) {
-      console.error('Oops! Something went wronw trying to get the next page of Products\n', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const previousPage = async () => {
-    setIsLoading(true);
-
-    try {
-      await goToPageByURL(paginationLinks.prev).then(processResponse);
-    } catch (error) {
-      console.error(
-        'Oops! Something went wronw trying to get the previous page of Products\n',
-        error
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const firstPage = async () => {
-    setIsLoading(true);
-
-    try {
-      await goToPageByURL(paginationLinks.first).then(processResponse);
-    } catch (error) {
-      console.error('Oops! Something went wronw trying to get the first page of Products\n', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const lastPage = async () => {
-    setIsLoading(true);
-
-    try {
-      await goToPageByURL(paginationLinks.last).then(processResponse);
-    } catch (error) {
-      console.error('Oops! Something went wronw trying to get the last page of Products\n', error);
-    } finally {
-      setIsLoading(false);
-    }
+    setIsLoading(false);
   };
 
   const getAll = async () => {
@@ -96,17 +87,18 @@ export const useProducts = () => {
     }
   };
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     fetchFirstData();
   }, []);
 
   return {
     currentData,
     isLoading,
-    firstPage,
-    previousPage,
-    nexPage,
-    lastPage,
+    paginationInfo,
+    firstPage: () => navigateTo(paginationLinks.first, errorLogs.firstPage),
+    previousPage: () => navigateTo(paginationLinks.prev || paginationLinks.first, errorLogs.previousPage),
+    nexPage: () => navigateTo(paginationLinks.next || paginationLinks.last, errorLogs.nextPage),
+    lastPage: () => navigateTo(paginationLinks.last, errorLogs.lastPage),
     getAll,
   };
 };
