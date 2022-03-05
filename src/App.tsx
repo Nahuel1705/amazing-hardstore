@@ -4,8 +4,11 @@ import {MdSearch} from 'react-icons/md';
 import {IoMdCart} from 'react-icons/io';
 
 import './assets/styles/App.css';
+import {useGlobalContext} from './hooks/useGlobalContext';
 
 function App() {
+  const {productsInCart} = useGlobalContext();
+
   return (
     <>
       <header className="header">
@@ -21,7 +24,7 @@ function App() {
           </button>
         </form>
         <Link to="/cart" className="shopping-cart">
-          <span className="products-counter">0</span>
+          <span className="products-counter">{productsInCart}</span>
           <IoMdCart />
         </Link>
       </header>

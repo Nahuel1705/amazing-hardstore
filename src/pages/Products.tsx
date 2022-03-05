@@ -1,6 +1,6 @@
 import {Button} from '../components/Button';
 import {Product} from '../components/Product';
-import {useProducts} from './hooks/useProducts';
+import {useProducts} from '../hooks/useProducts';
 import {BiArrowToLeft, BiArrowToRight, BiLeftArrowAlt, BiRightArrowAlt} from 'react-icons/bi';
 
 import './styles/Products.css';
