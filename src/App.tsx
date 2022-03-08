@@ -4,10 +4,19 @@ import {MdSearch} from 'react-icons/md';
 import {IoMdCart} from 'react-icons/io';
 
 import './assets/styles/App.css';
-import {useGlobalContext} from './hooks/useGlobalContext';
+import {useCart} from './hooks/useCart';
+import {useEffect} from 'react';
 
 function App() {
-  const {productsInCart} = useGlobalContext();
+  const {productsInCart, isAddingProduct, fetchCartData} = useCart();
+  console.log('render app');
+
+  useEffect(() => {
+    if (!isAddingProduct) {
+      //if has finished adding the product
+      fetchCartData(); //get the updated cart data
+    }
+  }, [isAddingProduct]);
 
   return (
     <>

@@ -1,9 +1,12 @@
-import {GlobalContextState} from '../../types/GlobalContext';
+import {GlobalContextStateType} from './GlobalContextStateType';
 import Product from '../../types/ProductType';
 
 type GlobalContextActions = {type: 'addToCart'; payload: Product} | {type: 'removeFromCart'; payload: {id: number}};
 
-export const GlobalContextReducer = (state: GlobalContextState, action: GlobalContextActions): GlobalContextState => {
+export const GlobalContextReducer = (
+  state: GlobalContextStateType,
+  action: GlobalContextActions
+): GlobalContextStateType => {
   switch (action.type) {
     case 'addToCart':
       return {

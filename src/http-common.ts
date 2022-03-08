@@ -10,8 +10,6 @@ export default axios.create({
 });
 
 export type HeaderLinks = {
-  currentPage: number;
-  pagesAmount: number;
   first: string;
   last: string;
   prev?: string;

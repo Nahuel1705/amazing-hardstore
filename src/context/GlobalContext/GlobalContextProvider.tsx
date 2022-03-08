@@ -1,10 +1,10 @@
 import {useReducer} from 'react';
-import {GlobalContextState} from '../../types/GlobalContext';
+import {GlobalContextStateType} from './GlobalContextStateType';
 import {GlobalContext} from './GlobalContext';
 import {GlobalContextReducer} from './GlobalContextReducer';
 import Product from '../../types/ProductType';
 
-const INITIAL_STATE: GlobalContextState = {
+const INITIAL_STATE: GlobalContextStateType = {
   productsInCart: 0,
   cartItems: [],
 };
