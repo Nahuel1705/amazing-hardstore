@@ -1,10 +1,10 @@
 import {HeaderLinks} from '../http-common';
 
 export const parseLinkHeader = (linkHeader: string): HeaderLinks => {
-  const linkHeadersArray = linkHeader.split(', ').map(header => header.split('; '));
-  const linkHeadersMap = linkHeadersArray.map(header => {
-    const thisHeaderRel = header[1].replace(/"/g, '').replace('rel=', '');
-    const thisHeaderUrl = header[0].slice(1, -1);
+  const linkHeadersArray: string[][] = linkHeader.split(', ').map((header: string) => header.split('; '));
+  const linkHeadersMap: string[][] = linkHeadersArray.map((header: string[]) => {
+    const thisHeaderRel: string = header[1].replace(/"/g, '').replace('rel=', '');
+    const thisHeaderUrl: string = header[0].slice(1, -1);
     return [thisHeaderRel, thisHeaderUrl];
   });
   return Object.fromEntries(linkHeadersMap);

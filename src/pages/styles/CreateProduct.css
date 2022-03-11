@@ -1,0 +1,33 @@
+.create-product-form {
+  display: flex;
+  flex-direction: column;
+  row-gap: 20px;
+  padding: 15px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  font-size: 2rem;
+}
+
+.form-group > input {
+  background-color: hsla(32, 100%, 50%, 0.082);
+  border: none;
+  direction: none;
+  padding: 0 15px 0 15px;
+  border-bottom: 2px solid gray;
+  width: 30vw;
+  font-size: 2rem;
+}
+
+.form-group > input:invalid {
+  background-color: hsla(0, 100%, 50%, 0.082);
+  border-bottom: 2px solid red;
+}
+
+.form-group > small {
+  font-size: small;
+  display: inline;
+  color: red;
+}

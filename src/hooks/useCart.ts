@@ -1,10 +1,11 @@
 import {useContext} from 'react';
 import {CartContext} from '../context/CartContext/CartContext';
+import {INITIAL_CART_STATE} from '../context/CartContext/CartContextProvider';
 import {cartClient} from '../services/cartClient';
 import Product from '../types/ProductType';
 
 export const useCart = () => {
-  const {cartState, cartDispatch} = useContext(CartContext);
+  const {cartState = INITIAL_CART_STATE, cartDispatch} = useContext(CartContext);
 
   const fetchCartData = async () => {
     cartDispatch({type: 'START_LOADING_CART'});

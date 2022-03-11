@@ -1,17 +1,10 @@
-import {useEffect, useState} from 'react';
+import {useReducer} from 'react';
 import {parseLinkHeader} from '../utils/parseHeaderLink';
 
-//fetching
 import {HeaderLinks} from '../http-common';
-import {
-  getProducts,
-  goToPageByNumber,
-  goToPageByURL,
-  RESULTS_PER_PAGE as productsPerPage,
-} from '../services/productsDataService';
+import {productsClient, RESULTS_PER_PAGE as productsPerPage} from '../services/productsClient';
 import {getParamsFromURL} from '../utils/getParamsFromURL';
 
-//types
 import {AxiosResponse} from 'axios';
 import Product from '../types/ProductType';
 
@@ -20,16 +13,56 @@ type PaginationInfo = {
   pagesAmount: number;
 };
 
+type ProductState = {
+  isLoading: boolean;
+  currentData: Product[];
+  paginationInfo: PaginationInfo;
+  paginationLinks: HeaderLinks;
+};
+
+type SetDataPayloadType = {
+  responseURL: string;
+  totalEntries: number;
+  data: Product[];
+  links?: string;
+};
+
+type ProductActions = {type: 'SET_DATA'; payload: SetDataPayloadType} | {type: 'START_LOADING'} | {type: 'END_LOADING'};
+
+const INITIAL_STATE: ProductState = {
+  isLoading: false,
+  currentData: [],
+  paginationInfo: {currentPage: 0, pagesAmount: 0},
+  paginationLinks: {first: '', last: ''},
+};
+
+const productsReducer = (state: ProductState, action: ProductActions): ProductState => {
+  switch (action.type) {
+    case 'START_LOADING':
+      return {...state, isLoading: true};
+    case 'SET_DATA':
+      const {responseURL, totalEntries, data, links} = action.payload;
+      const {page} = getParamsFromURL(responseURL, ['page']);
+      const pagesAmount = Math.ceil(totalEntries / productsPerPage);
+      return {
+        ...state,
+        currentData: data,
+        paginationInfo: {currentPage: page, pagesAmount},
+        isLoading: false,
+        ...(links && {paginationLinks: parseLinkHeader(links)}),
+      };
+    case 'END_LOADING':
+      return {...state, isLoading: false};
+    default:
+      return state;
+  }
+};
+
 export const useProducts = () => {
-  const [isLoading, setIsLoading] = useState<boolean | null>(null);
-  const [paginationLinks, setPaginationsLinks] = useState<HeaderLinks>({
-    first: '',
-    last: '',
-    currentPage: 0,
-    pagesAmount: 0,
-  });
-  const [paginationInfo, setPaginationInfo] = useState<PaginationInfo>({currentPage: 0, pagesAmount: 0});
-  const [currentData, setCurrentData] = useState<Product[]>([]);
+  const [{isLoading, paginationLinks, paginationInfo, currentData}, dispatch] = useReducer(
+    productsReducer,
+    INITIAL_STATE
+  );
 
   const errorLogs = {
     firstPage: 'Oops! Something went wronw trying to get the first page of Products\n',
@@ -39,57 +72,40 @@ export const useProducts = () => {
   };
 
   const processResponse = (response: AxiosResponse): void => {
-    const {page} = getParamsFromURL(response.request.responseURL, ['page']);
-    const totalEntries = parseInt(response.headers['x-total-count']) || 0;
-
-    setPaginationInfo({currentPage: page, pagesAmount: Math.ceil(totalEntries / productsPerPage)});
-    setCurrentData(response.data);
-    setPaginationsLinks({...parseLinkHeader(response.headers.link)});
+    if (response.data.length > 0) {
+      dispatch({
+        type: 'SET_DATA',
+        payload: {
+          responseURL: response.request.responseURL,
+          totalEntries: parseInt(response.headers['x-total-count']) || 0,
+          data: response.data,
+          links: response.headers.link,
+        },
+      });
+    } else {
+      dispatch({type: 'END_LOADING'});
+    }
   };
 
   const navigateTo = async (url: string, errorLog: string) => {
-    setIsLoading(true);
+    dispatch({type: 'START_LOADING'});
     try {
-      await goToPageByURL(url).then(processResponse);
+      await productsClient.goToPageByURL(url).then(processResponse);
     } catch (error) {
       console.error(errorLog, error);
+      dispatch({type: 'END_LOADING'});
     }
-    setIsLoading(false);
   };
 
   const fetchFirstData = async () => {
-    setIsLoading(true);
-
+    dispatch({type: 'START_LOADING'});
     try {
-      await goToPageByNumber(1).then(processResponse);
+      await productsClient.goToPageByNumber(1).then(processResponse);
     } catch (error) {
       console.error(errorLogs.firstPage, error);
-    }
-
-    setIsLoading(false);
-  };
-
-  const getAll = async () => {
-    try {
-      setIsLoading(true);
-      const response = await getProducts().then(res => res);
-      setIsLoading(false);
-
-      if (response.status !== 200) {
-        console.error(
-          `Oops! Something went wronw trying to get all Products\nStatus code:${response.status}\nError:${response.statusText}`
-        );
-      }
-      setCurrentData(response.data);
-    } catch (error) {
-      console.error('Oops! Something went wronw trying to get all Products', error);
-      setIsLoading(false);
+      dispatch({type: 'END_LOADING'});
     }
   };
-
-  useEffect(() => {
-    fetchFirstData();
-  }, []);
 
   return {
     currentData,
@@ -99,6 +115,6 @@ export const useProducts = () => {
     previousPage: () => navigateTo(paginationLinks.prev || paginationLinks.first, errorLogs.previousPage),
     nexPage: () => navigateTo(paginationLinks.next || paginationLinks.last, errorLogs.nextPage),
     lastPage: () => navigateTo(paginationLinks.last, errorLogs.lastPage),
-    getAll,
+    fetchFirstData,
   };
 };
